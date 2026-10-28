@@ -15,7 +15,7 @@
   bar.textContent = '↻';
   var label = document.createElement('div');
   label.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;text-align:center;font-size:.8rem;color:#1f7a4d;' +
-    'transform:translateY(-40px);opacity:0;pointer-events:none;font-family:inherit;background:rgba(255,255,255,.92);';
+    'transform:translateY(-120px);opacity:0;pointer-events:none;font-family:inherit;background:rgba(255,255,255,.92);';
   document.addEventListener('DOMContentLoaded', function(){ document.body.appendChild(bar); document.body.appendChild(label); });
 
   var startY = null, dist = 0, busy = false;
@@ -38,8 +38,9 @@
     label.textContent = d >= THRESHOLD ? 'چھوڑیں — صفحہ تازہ ہوگا' : 'نیچے کھینچیں';
   }
   function hide(){
+    dist = 0;
     bar.style.transition = label.style.transition = 'transform .2s, opacity .2s';
-    bar.style.transform = 'translateY(-60px)'; label.style.transform = 'translateY(-40px)';
+    bar.style.transform = 'translateY(-60px)'; label.style.transform = 'translateY(-120px)';
     bar.style.opacity = label.style.opacity = 0;
   }
 
@@ -54,6 +55,10 @@
     dist = (e.touches[0].clientY - startY) * 0.6;
     if(dist > 5) show(dist); else hide();
   }, {passive:true});
+
+  // فون اشارے کو اسکرول سمجھ لے تو touchend کی جگہ touchcancel آتا ہے — نشان چھپا دیں
+  window.addEventListener('touchcancel', function(){ startY = null; hide(); }, {passive:true});
+  window.addEventListener('scroll', function(){ if(!busy && (window.scrollY || document.documentElement.scrollTop) > 0){ startY = null; hide(); } }, {passive:true});
 
   window.addEventListener('touchend', function(){
     if(startY === null) return;

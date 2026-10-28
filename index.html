@@ -752,6 +752,8 @@ function showPage(id){
 document.addEventListener('DOMContentLoaded', ()=>{
   let id = (location.hash || '').slice(1);
   if(!id){ try{ id = sessionStorage.getItem('herbalPage') || ''; }catch(e){} }
+  // دوسرے صفحات کے 🏠 Home لنک (#home) سے آئیں تو ہمیشہ ہوم کی پہلی سکرین
+  if(id === 'home'){ try{ sessionStorage.removeItem('herbalPage'); history.replaceState(null, '', location.pathname + location.search); }catch(e){} window.scrollTo(0, 0); }
   if(id && id !== 'home' && id !== 'pdfmulti' && id !== 'naskhesaz' && /^[a-z]+$/.test(id) && document.getElementById('page-' + id)){
     if(id === 'kami' && typeof qmDeficiencyInit === 'function') qmDeficiencyInit();
     showPage(id);
