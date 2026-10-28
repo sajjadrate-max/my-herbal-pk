@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9829612219556114" crossorigin="anonymous"></script>
 <title>رابطہ کریں | My Herbal PK</title>
-<meta name="description" content="My Herbal PK سے رابطہ: سوال، تجویز، غلطی کی نشاندہی یا اشتہارات سے متعلق بات کے لیے ای میل کریں۔">
+<meta name="description" content="My Herbal PK سے رابطہ: سوال، تجویز یا غلطی کی نشاندہی کے لیے یہ فارم بھریں، پیغام سیدھا ہم تک پہنچ جائے گا۔">
 <link rel="canonical" href="https://myherbalpk.com/contact.html">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#1f7a4d">
@@ -14,7 +14,7 @@
 <meta property="og:locale" content="ur_PK">
 <meta property="og:url" content="https://myherbalpk.com/contact.html">
 <meta property="og:title" content="رابطہ کریں | My Herbal PK">
-<meta property="og:description" content="My Herbal PK سے رابطہ: سوال، تجویز، غلطی کی نشاندہی یا اشتہارات سے متعلق بات کے لیے ای میل کریں۔">
+<meta property="og:description" content="My Herbal PK سے رابطہ: سوال، تجویز یا غلطی کی نشاندہی کے لیے یہ فارم بھریں، پیغام سیدھا ہم تک پہنچ جائے گا۔">
 <meta property="og:image" content="https://myherbalpk.com/icon-512.png">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="icon-192.png" type="image/png">
@@ -23,7 +23,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:wght@400;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="site.css">
 <script src="ptr.js"></script>
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "ContactPage", "name": "رابطہ کریں", "url": "https://myherbalpk.com/contact.html", "publisher": {"@type": "Organization", "name": "My Herbal PK", "url": "https://myherbalpk.com/", "logo": {"@type": "ImageObject", "url": "https://myherbalpk.com/icon-512.png"}, "email": "sajjadrate@gmail.com"}}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "ContactPage", "name": "رابطہ کریں", "url": "https://myherbalpk.com/contact.html", "publisher": {"@type": "Organization", "name": "My Herbal PK", "url": "https://myherbalpk.com/", "logo": {"@type": "ImageObject", "url": "https://myherbalpk.com/icon-512.png"}}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://myherbalpk.com/"}, {"@type": "ListItem", "position": 2, "name": "رابطہ کریں", "item": "https://myherbalpk.com/contact.html"}]}</script>
 </head>
 <body>
@@ -35,9 +35,38 @@
 <div class="crumbs"><a href="">🏠 Home</a> › رابطہ کریں</div>
 
 <div class="card"><h1>رابطہ کریں</h1>
-<p>کسی سوال، تجویز، غلطی کی نشاندہی، مواد سے متعلق شکایت یا کسی اور استفسار کے لیے ہمیں ای میل کریں۔ ہم عام طور پر دو سے تین دن میں جواب دیتے ہیں۔</p>
-<p style="font-size:1.15rem; text-align:center;">📧 <a href="mailto:sajjadrate@gmail.com">sajjadrate@gmail.com</a></p>
-<div class="note">ہم ای میل پر کسی مریض کی تشخیص یا علاج تجویز نہیں کرتے۔ علاج کے لیے کسی مستند حکیم یا ڈاکٹر سے ملیں۔</div>
+<p>کسی سوال، تجویز، غلطی کی نشاندہی، مواد سے متعلق شکایت یا کسی اور استفسار کے لیے نیچے فارم بھر کر «پیغام بھیجیں» دبائیں۔ پیغام سیدھا ہم تک پہنچ جائے گا۔ ہم عام طور پر دو سے تین دن میں جواب دیتے ہیں۔</p>
+<form id="contactForm" class="contact-form" novalidate>
+<label>آپ کا نام <small>(اختیاری)</small><input name="name" type="text" maxlength="80" autocomplete="name"></label>
+<label>جواب کے لیے فون یا ای میل <small>(اختیاری)</small><input name="reply_to" type="text" maxlength="120" dir="ltr" autocomplete="email"></label>
+<label>موضوع<select name="topic"><option>سوال</option><option>تجویز</option><option>غلطی کی نشاندہی</option><option>Android ایپ</option><option>دیگر</option></select></label>
+<label>آپ کا پیغام<textarea name="message" rows="6" maxlength="4000" required></textarea></label>
+<input type="text" name="_gotcha" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
+<button type="submit" class="cta">📨 پیغام بھیجیں</button>
+<p id="contactStatus" role="status"></p>
+</form>
+<script>
+(function(){
+  var f = document.getElementById('contactForm'), st = document.getElementById('contactStatus');
+  f.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!f.message.value.trim()){ st.className = 'err'; st.textContent = 'پہلے اپنا پیغام لکھیں۔'; f.message.focus(); return; }
+    var btn = f.querySelector('button'); btn.disabled = true;
+    st.className = ''; st.textContent = 'بھیجا جا رہا ہے...';
+    fetch('https://formspree.io/f/xgogpgea', {
+      method: 'POST', headers: {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: JSON.stringify({ name: f.name.value, reply_to: f.reply_to.value, topic: f.topic.value, message: f.message.value,
+        _gotcha: f._gotcha.value, page: location.href, _subject: 'myherbalpk.com: ' + f.topic.value })
+    }).then(function(r){
+      if(!r.ok) throw new Error(r.status);
+      st.className = 'ok'; st.textContent = '✅ آپ کا پیغام بھیج دیا گیا۔ شکریہ!'; f.reset();
+    }).catch(function(){
+      st.className = 'err'; st.textContent = 'پیغام نہیں جا سکا۔ انٹرنیٹ چیک کر کے دوبارہ کوشش کریں۔';
+    }).then(function(){ btn.disabled = false; });
+  });
+})();
+</script>
+<div class="note">ہم پیغام پر کسی مریض کی تشخیص یا علاج تجویز نہیں کرتے۔ علاج کے لیے کسی مستند حکیم یا ڈاکٹر سے ملیں۔</div>
 </div>
 </main>
 <footer class="site-footer">

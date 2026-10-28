@@ -37,3 +37,13 @@ ul,ol{padding-inline-start:22px;}
 .site-footer a{color:#eef7ea; text-decoration:none; margin:0 4px; white-space:nowrap; font-family:'Poppins',sans-serif;}
 .crumbs a{font-family:'Poppins',sans-serif;}
 @media (max-width:520px){ h1{font-size:1.4rem;} article,.card{padding:16px;} .site-header nav.pills{gap:6px;} .site-header nav.pills a{font-size:.78rem; padding:6px 11px;} }
+.contact-form{display:flex; flex-direction:column; gap:12px; margin-top:12px;}
+.contact-form label{display:flex; flex-direction:column; gap:4px; color:var(--green); font-size:.95rem;}
+.contact-form small{color:var(--muted);}
+.contact-form input,.contact-form select,.contact-form textarea{font:inherit; font-size:1rem; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; color:var(--text);}
+.contact-form textarea{line-height:1.9;}
+.contact-form button{border:none; cursor:pointer; font:inherit; align-self:center;}
+.contact-form button:disabled{opacity:.6;}
+#contactStatus{text-align:center; margin:0;}
+#contactStatus.ok{color:var(--green);}
+#contactStatus.err{color:#b3261e;}
