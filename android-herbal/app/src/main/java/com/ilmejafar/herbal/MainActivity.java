@@ -15,8 +15,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
-
 public class MainActivity extends Activity {
 
     private static final String START_URL = "https://myherbalpk.com/";
@@ -24,7 +22,6 @@ public class MainActivity extends Activity {
     private static final int FILE_CHOOSER_REQUEST = 1001;
 
     private WebView webView;
-    private SwipeRefreshLayout swipe;
     private ValueCallback<Uri[]> filePathCallback;
 
     @Override
@@ -36,14 +33,7 @@ public class MainActivity extends Activity {
         }
 
         webView = new WebView(this);
-
-        // اوپر سے نیچے کھینچنے پر صفحہ دوبارہ لوڈ ہو (صرف تب جب صفحہ سب سے اوپر ہو)
-        swipe = new SwipeRefreshLayout(this);
-        swipe.addView(webView);
-        swipe.setColorSchemeColors(Color.parseColor("#1f7a4d"));
-        swipe.setOnChildScrollUpCallback((parent, child) -> webView.getScrollY() > 0);
-        swipe.setOnRefreshListener(() -> webView.reload());
-        setContentView(swipe);
+        setContentView(webView);
 
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
@@ -55,11 +45,6 @@ public class MainActivity extends Activity {
         s.setUseWideViewPort(true);
 
         webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                swipe.setRefreshing(false);
-            }
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return handleUrl(request.getUrl());
