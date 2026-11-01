@@ -7827,7 +7827,7 @@ function wajahMedsHtml(n){
   const m = wajahMedsFor(n);
   if(m && m.e) return `<div class="mujarrab-card" style="border-right-color:#e0524f;"><h4 style="color:#e0524f; margin-bottom:6px;">🚨 ایمرجنسی / سنگین بیماری</h4><p style="font-size:.9rem; color:#e0524f; font-weight:700;">اس کی کوئی دوا گھر پر خود نہ لیں — فوراً ڈاکٹر یا ہسپتال سے رجوع کریں۔</p></div>`;
   if(!m) return `<div class="mujarrab-card"><h4 style="color:var(--gold); margin-bottom:6px;">💊 ادویات</h4><p style="font-size:.88rem; color:var(--muted);">اس کی دوا معائنے اور وجہ معلوم کرنے کے بعد ڈاکٹر ہی تجویز کرتا ہے۔ مزاج کے مطابق ہربل علاج کے لیے Home پر تشخیص کریں۔</p></div>`;
-  // ہر دوا الگ ڈبے میں، ہر چیز کا لیبل: دوا کا نام، انگریزی نام، برانڈ، کمپنی، استعمال، احتیاط
+  // ہر دوا الگ ڈبے میں، ہر چیز کا لیبل: دوا کا نام (اردو اور انگریزی اصل نام ایک ہی خانے میں)، برانڈ، کمپنی، استعمال، احتیاط
   const row = (label, val)=> `<div class="med-row"><div class="med-lbl">${label}</div><div class="med-val">${val}</div></div>`;
   const en = t=> `<bdi class="med-en" dir="ltr">${escapeHtmlSearch(t)}</bdi>`;
   // برانڈ ترتیب سے: پہلی پسند، نہ ملے تو دوسری، پھر تیسری — آخر میں: کسی معتبر کمپنی کی یہی (generic) دوا
@@ -7873,10 +7873,9 @@ function wajahMedsHtml(n){
       const how = parts.shift() || '', caution = parts.join('؛ ');
       const purpose = [...new Set(wajahMatchKeys(QM_MED_PURPOSE, eng || x).map(k=> QM_MED_PURPOSE[k]))].join('؛ ');
       return `<div class="med-card">`
-        + row('دوا کا نام (اردو)', `<b>${escapeHtmlSearch(urdu)}</b>`)
+        + row(eng ? 'دوا کا نام (اردو / اصل نام)' : 'دوا کا نام (اردو)', `<b>${escapeHtmlSearch(urdu)}</b>${eng ? ' — <b>' + en(eng) + '</b><div class="med-co">انگریزی والا اصل دوا (generic) کا نام ہے، کمپنی کا نہیں</div>' : ''}`)
         + (purpose ? row('یہ دوا کس کام کی ہے', escapeHtmlSearch(purpose)) : '')
         + row('اس بیماری میں کیوں / کب', `<b>«${escapeHtmlSearch(wajahCurrent)}»</b>${note ? ' — ' + escapeHtmlSearch(note) : ' میں عام طور پر دی جاتی ہے'}`)
-        + (eng ? row('دوا کا اصل نام (Generic)', `<div>${en(eng)}</div><div class="med-co">یہ دوا کا نام ہے، کمپنی کا نہیں</div>`) : '')
         + (wajahFormFor(urdu, eng) ? row('💊 دوا کی شکل', `<b>${escapeHtmlSearch(wajahFormFor(urdu, eng))}</b>`) : '')
         + brandRows(inf.intl, inf.pk, eng)
 
