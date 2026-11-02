@@ -108,12 +108,15 @@
   // ہماری فہرست کے کوڈ → Google Translate کے کوڈ
   var GT = { 'ar-ae': 'ar', 'ar-sa': 'ar', 'ar-bh': 'ar', 'ar-qa': 'ar', 'ar-kw': 'ar', 'he': 'iw', 'jv': 'jw', 'zh': 'zh-CN' };
   var KEY = 'herbalLang';
+  var DEFAULT_LANG = 'en';
 
   function getLang(){
     try{ var l = localStorage.getItem(KEY); if(l) return l; }catch(e){}
     var m = document.cookie.match(/(?:^|;\s*)googtrans=\/ur\/([^;]+)/);
     if(m){ var g = decodeURIComponent(m[1]); for(var i=0;i<languageList.length;i++){ if((GT[languageList[i].code] || languageList[i].code) === g) return languageList[i].code; } }
-    return 'ur';
+    // پہلی بار آنے والوں کے لیے ڈیفالٹ English (سرچ انجن کے بوٹ کو اصل اردو صفحہ ہی دکھے)
+    if(/bot|crawl|spider|slurp|Mediapartners|Google-InspectionTool|Lighthouse|Chrome-Lighthouse/i.test(navigator.userAgent)) return 'ur';
+    return DEFAULT_LANG;
   }
   function setCookie(val){
     var host = location.hostname, parts = host.split('.');
@@ -125,6 +128,8 @@
   }
 
   var cur = getLang();
+  // ڈیفالٹ زبان کے لیے بھی Google Translate کی کوکی لگائیں تاکہ ترجمہ چلے
+  if(cur !== 'ur' && !/(?:^|;\s*)googtrans=/.test(document.cookie)) setCookie('/ur/' + (GT[cur] || cur));
 
   var css = document.createElement('style');
   css.textContent =
