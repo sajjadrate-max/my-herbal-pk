@@ -1,0 +1,5 @@
+{
+  "redirects": [
+    { "source": "/herbal.html", "destination": "/", "permanent": true }
+  ]
+}

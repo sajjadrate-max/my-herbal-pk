@@ -1,6 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /android-herbal/
-Disallow: /api/
 
 Sitemap: https://myherbalpk.com/sitemap.xml
