@@ -5644,6 +5644,24 @@ function renderMizajResult(totals, answered){
   const confidenceNote = selections['known_mizaj'] !== undefined
     ? 'یہ نتیجہ آپ کے خود بتائے گئے مزاج پر مبنی ہے۔'
     : `یہ نتیجہ ${answered} جوابات کی بنیاد پر ہے۔ جتنے زیادہ سوالات کے جواب دیں گے، نتیجہ اتنا ہی درست ہوگا۔`;
+  // مالک کی ای میل کے لیے: مزاج اور وہ جوابات جن سے یہ مزاج نکلا
+  (function(){
+    const basis = [];
+    if(selections['known_mizaj'] !== undefined) basis.push('مریض نے اپنا مزاج خود بتایا');
+    criteria.forEach(c=>{
+      if(selections[c.id] === undefined) return;
+      const o = c.options[selections[c.id]];
+      if(o && o.mizaj === dominant) basis.push(c.title + ': ' + o.label);
+    });
+    if(selections['pulse_rate'] !== undefined && pulseSelectionMizaj === dominant) basis.push('نبض کی رفتار (فی منٹ)');
+    if(selections['patient_type'] !== undefined){ const pt = patientTypeChoices[selections['patient_type']]; if(pt && pt.mizaj === dominant) basis.push('مریض: ' + pt.label); }
+    selectedDiseaseObjs.forEach(d=>{
+      const fu = diseaseFollowups[d.name];
+      const m = (fu && window.diseaseFollowupAnswers && window.diseaseFollowupAnswers[d.name] === true) ? fu.yesMizaj : d.mizaj;
+      if(m === dominant) basis.push('بیماری: ' + d.name);
+    });
+    window.homeEmailInfo = { mizaj: tendencyDisplayName + ' مزاج' + (patientNumber ? ' (نمبر ' + patientNumber + ')' : ''), basis };
+  })();
   html += `<h3>تشخیصی نتیجہ: ${tendencyDisplayName} مزاج${patientNumber ? ' (نمبر '+patientNumber+')' : ''}</h3>
   <p style="color:var(--muted); margin-top:14px;">${confidenceNote}</p>
   </div>`;
@@ -10323,25 +10341,34 @@ if('serviceWorker' in navigator && herbalCanLoadSiteFiles()){
   // رپورٹ براؤزر سے سیدھی FormSubmit کو جاتی ہے (عام ویب فارم کی طرح) — سرور سے بھیجنے پر FormSubmit روک دیتا ہے
   const REPORT_URL = 'https://formsubmit.co/h7927022@gmail.com';
   const fmtTime = t=> new Date(t).toLocaleTimeString('en-GB', { timeZone:'Asia/Karachi' });
+  // تشخیص کے نتیجے کے ڈبوں سے ای میل کے چار حصے: مزاج، علامات و بیماریاں، دوائیں، غذائیں
+  let lastSummary = '';
+  function diagnosisSummary(){
+    const box = document.getElementById('mizajResult');
+    const info = window.homeEmailInfo;
+    if(!box || !info || !/تشخیصی نتیجہ/.test(box.innerText || '')) return null;
+    const cardText = re=> [...box.querySelectorAll('.result-card')].filter(c=>{ const h = c.querySelector('h3'); return h && re.test(h.textContent); })
+      .map(c=>{ const h = c.querySelector('h3').textContent.trim(); return h + '\n' + cleanLines((c.innerText || '').replace(h, ''), 3000); }).join('\n\n');
+    const told = box.querySelector('.result-card h3') && [...box.querySelectorAll('.result-card')].find(c=> /آپ نے یہ بتایا ہے/.test(c.textContent));
+    const out = {
+      '1. مزاج': info.mizaj + (info.basis.length ? '\n\nیہ مزاج ان جوابات سے نکلا:\n• ' + info.basis.join('\n• ') : ''),
+      '2. تمام علامات اور بیماریاں': told ? cleanLines(told.innerText.replace('آپ نے یہ بتایا ہے', ''), 3000) : '—',
+      '3. تجویز کردہ دوائیں': cardText(/دوا/) || '—',
+      '4. تجویز کردہ غذائیں': cardText(/غذائیں|چٹنی/) || '—'
+    };
+    // دوا ابھی لوڈ ہو رہی ہو تو انتظار
+    if(/⏳/.test(out['3. تجویز کردہ دوائیں'])) return null;
+    return out;
+  }
   function send(leaving){
-    let batch = events.slice(sentUpTo);
-    // صرف صفحے بدلنے/بٹن دبانے کی رپورٹ نہ بھیجیں — کچھ لکھا/چنا/نتیجہ ہو تب
-    if(!batch.some(ev=> ev.type !== 'دبایا')) return;
-    if(!batch.length) return;
+    // صرف تشخیص کا نتیجہ ای میل ہوتا ہے، ہر نتیجہ ایک بار
+    const ordered = diagnosisSummary();
+    if(!ordered) return;
+    const key = JSON.stringify(ordered);
+    if(key === lastSummary) return;
+    lastSummary = key;
     sentUpTo = events.length;
-    const head = 'سیشن #' + SID + ' · ' + new Date(batch[0].t).toLocaleDateString('en-GB', { timeZone:'Asia/Karachi' }) + ' (پاکستانی وقت) · ' + (navigator.userAgent.match(/\(([^)]*)\)/) || ['',''])[1].slice(0, 80);
-    // ای میل میں ہر قدم الگ خانے میں: عنوان = نمبر · وقت · صفحہ · کیا ہوا
-    const fields = { 'معلومات': head };
-    let total = head.length;
-    for(let i = batch.length - 1; i >= 0 && total < 24000; i--){
-      const ev = batch[i];
-      fields[(i+1) + ' · ' + fmtTime(ev.t) + ' · ' + ev.page + ' · ' + ev.type] = ev.text;
-      total += ev.text.length + 60;
-    }
-    const ordered = { 'معلومات': head };
-    Object.keys(fields).filter(k=> k !== 'معلومات').sort((a, b)=> parseInt(a) - parseInt(b)).forEach(k=> ordered[k] = fields[k]);
-    const first = batch.find(ev=> ev.type === 'لکھا' || ev.type === 'چنا');
-    const subject = 'My Herbal PK سرگرمی رپورٹ #' + SID + (first ? ' — ' + first.text.slice(0, 50) : '');
+    const subject = 'My Herbal PK — ' + (window.homeEmailInfo ? window.homeEmailInfo.mizaj : 'تشخیص');
     const AJAX = REPORT_URL.replace('formsubmit.co/', 'formsubmit.co/ajax/');
     try{
       if(leaving && navigator.sendBeacon){
