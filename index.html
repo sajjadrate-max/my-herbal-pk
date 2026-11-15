@@ -227,6 +227,7 @@ footer a{color:#eef7ea; text-decoration:none; white-space:nowrap; font-family:'P
     <a onclick="showPage('ghiza')" id="nav-ghiza"><span class="ni">🥗</span>غذائی چارٹ — مزاج وار</a>
     <a onclick="showPage('kami')" id="nav-kami"><span class="ni">🩺</span>وٹامن و معدنیات کی کمی</a>
     <a onclick="showPage('wajah')" id="nav-wajah"><span class="ni">💊</span>میڈیکل کے مطابق ادویات</a>
+    <a onclick="showPage('rxswap')" id="nav-rxswap"><span class="ni">🔁</span>ڈاکٹر کے بل میں دوائی کی تبدیلی</a>
   </nav>
 </header>
 
@@ -406,6 +407,23 @@ footer a{color:#eef7ea; text-decoration:none; white-space:nowrap; font-family:'P
 </section>
 
 <!-- ===================== DISEASE CAUSE-TYPE FINDER (DOCTOR'S CLASSIFICATION) ===================== -->
+<!-- ===================== ڈاکٹر کا نسخہ/بل: لوکل دوا کی جگہ اچھی کمپنی ===================== -->
+<section class="page-section" id="page-rxswap">
+  <h2 class="section-title">🔁 ڈاکٹر کے بل میں دوائی کی تبدیلی</h2>
+  <div class="note">ڈاکٹر کے نسخے یا میڈیکل اسٹور کے بل کی تصویر بھیجیں۔ ہر دوا پڑھ کر بتایا جائے گا کہ وہ کس کمپنی کی ہے، اور اگر لوکل کمپنی کی ہے تو <b>اچھی کمپنی کی بالکل وہی دوا</b> (وہی اصل نام، وہی طاقت، وہی شکل) بتائی جائے گی۔ صرف کمپنی بدلتی ہے، دوا، خوراک اور مدت وہی رہتی ہے جو ڈاکٹر نے لکھی۔</div>
+  <div class="result-card" style="text-align:center;">
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <label class="btn" style="cursor:pointer;">📷 تصویر کھینچیں<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="rxPick(this.files); this.value='';"></label>
+      <label class="btn secondary" style="cursor:pointer;">🖼 گیلری سے چنیں<input type="file" accept="image/*" multiple style="display:none;" onchange="rxPick(this.files); this.value='';"></label>
+    </div>
+    <p style="color:var(--muted); font-size:.8rem; margin-top:8px;">زیادہ سے زیادہ 3 تصویریں (لمبا بل ہو تو دو حصوں میں)۔ تصویر سیدھی اور روشنی میں ہو تاکہ لکھائی صاف پڑھی جا سکے۔</p>
+    <div id="rxThumbs" style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:10px;"></div>
+    <button class="btn" id="rxGoBtn" onclick="rxAnalyze()" style="display:none; margin-top:12px; border-radius:24px; padding:10px 26px;">🔍 دوائیں چیک کریں</button>
+  </div>
+  <div id="rxResult" style="margin-top:16px;"></div>
+  <p style="color:var(--muted); font-size:.78rem; background:rgba(224,82,79,.06); border:1px solid var(--border); border-radius:8px; padding:8px 10px; margin-top:12px;">⚠ تصویر کمپیوٹر (AI) پڑھتا ہے، جو غلطی کر سکتا ہے۔ نئی دوا خریدتے وقت پیکٹ پر <b>اصل دوا (generic) کا نام اور طاقت</b> ڈاکٹر کے لکھے سے ضرور ملائیں، اور فارماسسٹ یا ڈاکٹر سے تصدیق کر لیں۔ خوراک اور مدت خود نہ بدلیں۔</p>
+</section>
+
 <section class="page-section" id="page-wajah">
   <h2 class="section-title">🩺 میڈیکل کے مطابق</h2>
   <div class="note">ہر بیماری کمی کی وجہ سے نہیں ہوتی۔ ڈاکٹر پہلے بیماری کی اصل وجہ معلوم کرتے ہیں — انفیکشن، سوزش، خود مدافعتی، رکاوٹ، عضو کی خرابی، رسولی، چوٹ، موروثی، طرزِ زندگی، ذہنی یا کمی — کمی ان میں سے صرف ایک قسم ہے، اور اس کا علاج تب ہی کیا جاتا ہے جب ٹیسٹ میں کمی ثابت ہو جائے۔ جدید طب کا اصول ہے: "پہلے وجہ معلوم کرو، پھر علاج کرو"۔ <b>یہ صفحہ صرف معلومات کے لیے ہے، تشخیص یا علاج کا متبادل نہیں — صحیح تشخیص اور دوا کے لیے ہمیشہ ڈاکٹر سے رجوع کریں۔</b></div>
@@ -642,6 +660,96 @@ footer a{color:#eef7ea; text-decoration:none; white-space:nowrap; font-family:'P
 <!-- ===================== BIOPHARMACOPEIA PDF ===================== -->
 </main>
 
+<script>
+// ===== ڈاکٹر کے بل میں دوائی کی تبدیلی =====
+let rxImages = [];
+function rxShrink(file){
+  return new Promise((ok, fail)=>{
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{
+      const max = 1600, k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = ()=>{ URL.revokeObjectURL(url); fail(new Error('تصویر نہیں کھل سکی')); };
+    img.src = url;
+  });
+}
+async function rxPick(list){
+  for(const f of Array.from(list || [])){
+    if(rxImages.length >= 3) break;
+    if(!/^image\//.test(f.type)) continue;
+    try{ rxImages.push(await rxShrink(f)); }catch(e){}
+  }
+  rxRenderThumbs();
+}
+function rxRenderThumbs(){
+  const box = document.getElementById('rxThumbs');
+  box.innerHTML = rxImages.map((u, i)=> `<div style="position:relative;"><img src="${u}" style="width:90px; height:110px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">`
+    + `<button onclick="rxImages.splice(${i},1); rxRenderThumbs();" style="position:absolute; top:-6px; left:-6px; background:#e0524f; color:#fff; border:none; border-radius:50%; width:22px; height:22px; cursor:pointer;">×</button></div>`).join('');
+  document.getElementById('rxGoBtn').style.display = rxImages.length ? '' : 'none';
+}
+async function rxAnalyze(){
+  const out = document.getElementById('rxResult'), btn = document.getElementById('rxGoBtn');
+  if(!rxImages.length) return;
+  btn.disabled = true;
+  out.innerHTML = '<div class="result-card"><p style="text-align:center; color:var(--muted);">⏳ نسخہ پڑھا جا رہا ہے... (آدھا منٹ لگ سکتا ہے)</p></div>';
+  try{
+    const r = await fetch('/api/book-item-info', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ action:'rx', images: rxImages }) });
+    const d = await r.json().catch(()=> ({}));
+    if(!r.ok) throw new Error(d.error || ('سرور کی خرابی ' + r.status));
+    rxRender(d);
+  }catch(e){
+    out.innerHTML = `<div class="result-card"><p style="color:#e0524f;">نسخہ نہیں پڑھا جا سکا: ${escapeHtmlSearch(e.message || String(e))}</p></div>`;
+  }
+  btn.disabled = false;
+}
+function rxRender(d){
+  const out = document.getElementById('rxResult');
+  const meds = d.medicines || [];
+  const esc = escapeHtmlSearch, en = t=> `<bdi dir="ltr">${esc(t)}</bdi>`;
+  if(!meds.length){ out.innerHTML = `<div class="result-card"><p>${esc(d.note || 'تصویر میں کوئی دوا نہیں پڑھی جا سکی۔ صاف اور سیدھی تصویر دوبارہ بھیجیں۔')}</p></div>`; return; }
+  const n = s=> meds.filter(m=> m.status === s).length;
+  const badge = { good:['✅','اچھی کمپنی — تبدیلی کی ضرورت نہیں','var(--gold)'], local:['⚠️','لوکل کمپنی','#c9821b'], unknown:['❔','کمپنی معلوم نہیں','#c9821b'], unclear:['❓','صاف پڑھا نہیں جا سکا','#e0524f'] };
+  const finalList = [];
+  let html = `<div class="result-card"><h3>نتیجہ</h3><p>کل ${meds.length} دوائیں — ✅ ${n('good')} اچھی کمپنی، ⚠️ ${n('local') + n('unknown')} بدلنے کے قابل، ❓ ${n('unclear')} صاف نہیں پڑھی گئیں</p></div>`;
+  meds.forEach((m, i)=>{
+    const b = badge[m.status] || badge.unknown;
+    const base = [m.generic, m.strength].filter(Boolean).join(' ');
+    html += `<div class="result-card" style="margin-top:12px; border-right:4px solid ${b[2]};">`
+      + `<p style="font-weight:700;">${i+1}۔ ${en(m.written || m.generic)} ${m.company ? '<span style="color:var(--muted); font-size:.85rem;">(' + en(m.company) + ')</span>' : ''}</p>`
+      + `<p style="color:${b[2]}; font-weight:700;">${b[0]} ${b[1]}</p>`
+      + (m.reason ? `<p style="color:var(--muted); font-size:.85rem;">${esc(m.reason)}</p>` : '')
+      + (base ? `<p>اصل دوا: <b>${en(base + (m.form ? ' · ' + m.form : ''))}</b></p>` : '<p style="color:#e0524f; font-size:.85rem;">اصل دوا (generic) کا نام پڑھا نہیں جا سکا — فارماسسٹ سے پوچھیں۔</p>')
+      + (m.dose ? `<p style="font-size:.88rem;">ڈاکٹر کی ہدایت: ${en(m.dose)}</p>` : '');
+    if(m.alternatives && m.alternatives.length){
+      html += `<p style="margin-top:8px; color:var(--gold-soft); font-weight:700;">اس کی جگہ لیں (وہی دوا، وہی طاقت):</p><ul style="margin:4px 0 0; padding-inline-start:20px; list-style:none;">`
+        + m.alternatives.map((a, k)=> `<li>${k === 0 ? '1️⃣' : k === 1 ? '2️⃣' : '3️⃣'} <b>${en(a.brand + (a.company ? ' — ' + a.company : ''))}</b></li>`).join('') + `</ul>`;
+      finalList.push(`${i+1}. ${m.alternatives[0].brand}${m.alternatives[0].company ? ' (' + m.alternatives[0].company + ')' : ''} — ${base}${m.dose ? ' — ' + m.dose : ''}  [بجائے ${m.written}]`);
+    } else {
+      if(m.status === 'local' || m.status === 'unknown') html += `<p style="font-size:.85rem; color:var(--muted);">اچھی کمپنی کا یہی برانڈ یقین سے نہیں بتایا جا سکا — فارماسسٹ سے اسی generic کا کسی بڑی کمپنی کا برانڈ مانگیں۔</p>`;
+      finalList.push(m.status === 'unclear' && !base ? `${i+1}. (صاف نہیں پڑھی گئی — ڈاکٹر/فارماسسٹ سے پوچھیں)` : `${i+1}. ${m.written || m.generic}${base ? ' — ' + base : ''}${m.dose ? ' — ' + m.dose : ''}`);
+    }
+    html += `</div>`;
+  });
+  window.rxFinalText = 'نئی دوا لسٹ (My Herbal PK)\n' + finalList.join('\n');
+  html += `<div class="result-card" style="margin-top:12px;"><h3>میڈیکل اسٹور کے لیے نئی لسٹ</h3><pre style="white-space:pre-wrap; direction:ltr; text-align:left; font-family:Poppins,sans-serif; font-size:.85rem; line-height:1.8;">${esc(window.rxFinalText)}</pre>`
+    + `<div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;"><button class="btn" onclick="rxShare()">📤 واٹس ایپ / شیئر</button><button class="btn secondary" onclick="rxCopy(this)">📋 کاپی</button></div></div>`;
+  if(d.note) html += `<p style="color:var(--muted); font-size:.85rem; margin-top:8px;">ℹ️ ${esc(d.note)}</p>`;
+  out.innerHTML = html;
+  out.scrollIntoView({behavior:'smooth'});
+}
+function rxShare(){
+  const t = window.rxFinalText || '';
+  if(navigator.share) navigator.share({ text: t }).catch(()=>{});
+  else window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank');
+}
+function rxCopy(btn){
+  const t = window.rxFinalText || '';
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(()=>{ btn.textContent = '✅ کاپی ہو گئی'; }).catch(()=>{ window.prompt('کاپی کریں:', t); });
+}
+</script>
 <footer><a href="#" onclick="location.reload(); return false;">🔄 Refresh</a> · <a href="articles/">📚 Articles</a> · <a href="about.html">ℹ️ About</a> · <a href="contact.html">📞 Contact</a> · <a href="privacy-policy.html">🔒 Privacy Policy</a> · <a href="terms.html">📄 Terms</a> · <a href="disclaimer.html">⚠️ Disclaimer</a></footer>
 
 <script>
