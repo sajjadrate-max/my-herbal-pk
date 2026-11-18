@@ -665,26 +665,41 @@ footer a{color:#eef7ea; text-decoration:none; white-space:nowrap; font-family:'P
 // ===== ڈاکٹر کے بل میں دوائی کی تبدیلی =====
 let rxImages = [];
 const RX_MAX = 20;
-function rxShrink(file){
-  return new Promise((ok, fail)=>{
-    const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = ()=>{
-      const max = 1600, k = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.85));
-    };
-    img.onerror = ()=>{ URL.revokeObjectURL(url); fail(new Error('تصویر نہیں کھل سکی')); };
-    img.src = url;
-  });
+// تصویر چھوٹی کر کے JPEG بنائیں — پہلے <img> سے، نہ کھلے تو createImageBitmap سے، پھر FileReader سے
+function rxDraw(src, w, h){
+  const max = 1600, k = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+function rxLoadImg(url){
+  return new Promise((ok, fail)=>{ const img = new Image(); img.onload = ()=> ok(img); img.onerror = ()=> fail(new Error('تصویر نہیں کھل سکی')); img.src = url; });
+}
+async function rxShrink(file){
+  const url = URL.createObjectURL(file);
+  try{ const img = await rxLoadImg(url); return rxDraw(img, img.naturalWidth || img.width, img.naturalHeight || img.height); }
+  catch(e){}
+  finally{ URL.revokeObjectURL(url); }
+  if(window.createImageBitmap){
+    try{ const bmp = await createImageBitmap(file); const out = rxDraw(bmp, bmp.width, bmp.height); try{ bmp.close(); }catch(e){} return out; }catch(e){}
+  }
+  const dataUrl = await new Promise((ok, fail)=>{ const fr = new FileReader(); fr.onload = ()=> ok(fr.result); fr.onerror = ()=> fail(fr.error); fr.readAsDataURL(file); });
+  const img = await rxLoadImg(String(dataUrl).replace(/^data:[^;,]*/, 'data:image/jpeg'));
+  return rxDraw(img, img.naturalWidth || img.width, img.naturalHeight || img.height);
 }
 async function rxPick(list){
-  for(const f of Array.from(list || [])){
+  // ایپ (WebView) میں گیلری سے آئی فائلوں کی type کبھی خالی یا application/octet-stream ہوتی ہے —
+  // اس لیے صرف واضح غیر تصویری فائلیں (ویڈیو، آواز، متن، PDF) چھوڑیں، باقی سب کھولنے کی کوشش کریں
+  const files = Array.from(list || []).filter(f=> !/^(video|audio|text)\/|pdf/i.test(f.type || ''));
+  const cnt = document.getElementById('rxCount');
+  let failed = 0, done = 0;
+  for(const f of files){
     if(rxImages.length >= RX_MAX) break;
-    if(!/^image\//.test(f.type)) continue;
-    try{ rxImages.push(await rxShrink(f)); }catch(e){}
+    if(cnt) cnt.textContent = '⏳ تصویریں لگ رہی ہیں... ' + (++done) + ' / ' + files.length;
+    try{ rxImages.push(await rxShrink(f)); rxRenderThumbs(); }catch(e){ failed++; }
   }
   rxRenderThumbs();
+  if(failed && cnt) cnt.textContent = (cnt.textContent ? cnt.textContent + ' — ' : '') + failed + ' تصویر نہیں کھل سکی، دوبارہ چنیں یا کیمرے سے نئی لیں';
 }
 function rxRenderThumbs(){
   const box = document.getElementById('rxThumbs');
