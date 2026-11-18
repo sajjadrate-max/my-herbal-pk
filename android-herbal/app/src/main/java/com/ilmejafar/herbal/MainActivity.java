@@ -3,6 +3,11 @@ package com.ilmejafar.herbal;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
+import android.provider.MediaStore;
+
+import androidx.core.content.FileProvider;
+
+import java.io.File;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -24,6 +29,7 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
+    private Uri cameraUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +70,23 @@ public class MainActivity extends Activity {
                                              FileChooserParams params) {
                 if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                 filePathCallback = callback;
+                cameraUri = null;
+                // <input capture> (مثلاً «📷 تصویر کھینچیں») ہو تو سیدھا کیمرا کھولیں
+                if (params.isCaptureEnabled()) {
+                    try {
+                        File dir = new File(getCacheDir(), "camera");
+                        dir.mkdirs();
+                        File photo = File.createTempFile("photo_", ".jpg", dir);
+                        cameraUri = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".fileprovider", photo);
+                        Intent cam = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        cam.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
+                        cam.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivityForResult(cam, FILE_CHOOSER_REQUEST);
+                        return true;
+                    } catch (Exception e) {
+                        cameraUri = null; // کیمرا نہ کھلے تو نیچے والا عام انتخاب
+                    }
+                }
                 Intent intent = params.createIntent();
                 // ویب صفحہ کئی فائلیں مانگے (multiple) تو گیلری میں بھی ایک ساتھ کئی تصویریں چننے دیں
                 if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) {
@@ -113,7 +136,12 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == FILE_CHOOSER_REQUEST) {
             if (filePathCallback != null) {
-                filePathCallback.onReceiveValue(chosenFiles(resultCode, data));
+                if (cameraUri != null) {
+                    filePathCallback.onReceiveValue(resultCode == RESULT_OK ? new Uri[]{cameraUri} : null);
+                    cameraUri = null;
+                } else {
+                    filePathCallback.onReceiveValue(chosenFiles(resultCode, data));
+                }
                 filePathCallback = null;
             }
             return;

@@ -42,3 +42,8 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
+
+dependencies {
+    // کیمرے کی تصویر محفوظ طریقے سے ایپ تک لانے کے لیے FileProvider
+    implementation 'androidx.core:core:1.12.0'
+}
