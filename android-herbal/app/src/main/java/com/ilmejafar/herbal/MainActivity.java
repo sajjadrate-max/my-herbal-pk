@@ -2,6 +2,7 @@ package com.ilmejafar.herbal;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -63,8 +64,13 @@ public class MainActivity extends Activity {
                                              FileChooserParams params) {
                 if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                 filePathCallback = callback;
+                Intent intent = params.createIntent();
+                // ویب صفحہ کئی فائلیں مانگے (multiple) تو گیلری میں بھی ایک ساتھ کئی تصویریں چننے دیں
+                if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) {
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                }
                 try {
-                    startActivityForResult(params.createIntent(), FILE_CHOOSER_REQUEST);
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST);
                 } catch (ActivityNotFoundException e) {
                     filePathCallback = null;
                     return false;
@@ -107,12 +113,24 @@ public class MainActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == FILE_CHOOSER_REQUEST) {
             if (filePathCallback != null) {
-                filePathCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
+                filePathCallback.onReceiveValue(chosenFiles(resultCode, data));
                 filePathCallback = null;
             }
             return;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    // ایک یا کئی چنی گئی فائلیں (کئی ہوں تو ClipData میں آتی ہیں)
+    private Uri[] chosenFiles(int resultCode, Intent data) {
+        if (resultCode != RESULT_OK || data == null) return null;
+        ClipData clip = data.getClipData();
+        if (clip != null && clip.getItemCount() > 0) {
+            Uri[] uris = new Uri[clip.getItemCount()];
+            for (int i = 0; i < uris.length; i++) uris[i] = clip.getItemAt(i).getUri();
+            return uris;
+        }
+        return WebChromeClient.FileChooserParams.parseResult(resultCode, data);
     }
 
     @Override
