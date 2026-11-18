@@ -115,13 +115,14 @@ const RX_SYSTEM = `You read doctors' prescriptions and pharmacy bills from Pakis
 For EACH medicine line you can see, return:
 - "written": the brand/name exactly as written (keep spelling)
 - "company": manufacturer if printed or if you reliably know this Pakistani brand's maker, else ""
+- "country": the country the company is from, in Urdu (e.g. "پاکستان", "فرانس", "امریکہ", "برطانیہ", "سوئٹزرلینڈ", "جرمنی", "بھارت", "چین"), "" if not known
 - "generic": the active ingredient(s) (salt). If you cannot tell with confidence, return "" — never guess.
 - "strength": e.g. "500 mg", "250 mg/5 ml"; "" if not visible and not certain
 - "form": tablet / capsule / syrup / suspension / injection / drops / cream / ointment / inhaler / sachet / other
 - "dose": dosing instructions exactly as written (e.g. "1+0+1 x 5 days"), else ""
 - "status": "good" if the maker is a multinational or a large reputable Pakistani manufacturer (e.g. GSK, Abbott, Pfizer, Sanofi, Novartis, Bayer, Roche, AstraZeneca, MSD, Getz Pharma, Searle, Sami, Hilton, Martin Dow, Ferozsons, Highnoon, AGP, CCL, Bosch, PharmEvo, Barrett Hodgson, Atco, Platinum, Nabiqasim, Macter, OBS, Genix, Tabros, Wilson's, Indus, Medisure, Zafa); "local" if it is a small/local or little-known maker; "unknown" if you cannot tell the maker; "unclear" if the line itself cannot be read.
 - "reason": one short Urdu sentence why (e.g. "یہ ایک چھوٹی مقامی کمپنی کا برانڈ ہے")
-- "alternatives": ONLY when status is "local" or "unknown" AND generic is known: up to 3 brands sold in Pakistan by the reputable makers above that contain EXACTLY the same generic(s), same strength and same form. Each {"brand","company"}. Never suggest a different medicine, different strength or different form. If unsure a brand exists in that strength/form, leave it out.
+- "alternatives": ONLY when status is "local" or "unknown" AND generic is known: up to 3 brands sold in Pakistan by the reputable makers above that contain EXACTLY the same generic(s), same strength and same form. Each {"brand","company","country"} where country is the company's home country in Urdu (e.g. Sanofi → "فرانس", Getz Pharma → "پاکستان", GSK → "برطانیہ", Abbott → "امریکہ", Novartis → "سوئٹزرلینڈ"). Never suggest a different medicine, different strength or different form. If unsure a brand exists in that strength/form, leave it out.
 Do not add, remove or change any medicine, dose or duration. Not a diagnosis.
 Return JSON: {"medicines":[...], "note": short Urdu note if the image is not a prescription/bill or is hard to read, else ""}.`;
 
@@ -151,11 +152,11 @@ async function handleRx(body, apiKey, res) {
     const status = ['good', 'local', 'unknown', 'unclear'].includes(m && m.status) ? m.status : 'unknown';
     const generic = str(m && m.generic, 120);
     return {
-      written: str(m && m.written, 80), company: str(m && m.company, 60), generic,
+      written: str(m && m.written, 80), company: str(m && m.company, 60), country: str(m && m.country, 40), generic,
       strength: str(m && m.strength, 40), form: str(m && m.form, 30), dose: str(m && m.dose, 80),
       status, reason: str(m && m.reason, 160),
       alternatives: (status === 'local' || status === 'unknown') && generic
-        ? (Array.isArray(m.alternatives) ? m.alternatives : []).map(a => ({ brand: str(a && a.brand, 60), company: str(a && a.company, 60) })).filter(a => a.brand).slice(0, 3)
+        ? (Array.isArray(m.alternatives) ? m.alternatives : []).map(a => ({ brand: str(a && a.brand, 60), company: str(a && a.company, 60), country: str(a && a.country, 40) })).filter(a => a.brand).slice(0, 3)
         : []
     };
   }).filter(m => m.written || m.generic);
