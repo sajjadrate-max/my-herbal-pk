@@ -714,6 +714,20 @@ function rxCountry(company, given){
   }
   return String(given || '').trim();
 }
+// دوا کے فوائد: سائٹ کی اپنی فہرست (QM_MED_PURPOSE) + AI کے بتائے ہوئے نکات
+function rxUsesHtml(m){
+  const pts = [];
+  try{
+    if(m.generic && typeof QM_MED_PURPOSE === 'object' && typeof wajahMatchKeys === 'function')
+      wajahMatchKeys(QM_MED_PURPOSE, m.generic).forEach(k=> pts.push(QM_MED_PURPOSE[k]));
+  }catch(e){}
+  (m.uses || []).forEach(u=> pts.push(u));
+  const list = [...new Set(pts.map(x=> String(x).trim()).filter(Boolean))].slice(0, 5);
+  if(!list.length) return '';
+  const same = m.alternatives && m.alternatives.length ? '<p style="font-size:.8rem; color:var(--muted); margin-top:4px;">نیچے بتائے گئے برانڈز میں بھی یہی دوا ہے، اس لیے ان کے فائدے بھی بالکل یہی ہیں۔</p>' : '';
+  return '<p style="margin-top:8px; color:var(--gold-soft); font-weight:700;">💊 فوائد (کس کام کی دوا ہے):</p><ul style="margin:2px 0 0; padding-inline-start:20px;">'
+    + list.map(x=> '<li>' + escapeHtmlSearch(x) + '</li>').join('') + '</ul>' + same;
+}
 function rxRender(d){
   const out = document.getElementById('rxResult');
   const meds = d.medicines || [];
@@ -732,7 +746,8 @@ function rxRender(d){
       + `<p style="color:${b[2]}; font-weight:700;">${b[0]} ${b[1]}</p>`
       + (m.reason ? `<p style="color:var(--muted); font-size:.85rem;">${esc(m.reason)}</p>` : '')
       + (base ? `<p>اصل دوا: <b>${en(base + (m.form ? ' · ' + m.form : ''))}</b></p>` : '<p style="color:#e0524f; font-size:.85rem;">اصل دوا (generic) کا نام پڑھا نہیں جا سکا — فارماسسٹ سے پوچھیں۔</p>')
-      + (m.dose ? `<p style="font-size:.88rem;">ڈاکٹر کی ہدایت: ${en(m.dose)}</p>` : '');
+      + (m.dose ? `<p style="font-size:.88rem;">ڈاکٹر کی ہدایت: ${en(m.dose)}</p>` : '')
+      + rxUsesHtml(m);
     if(m.alternatives && m.alternatives.length){
       html += `<p style="margin-top:8px; color:var(--gold-soft); font-weight:700;">اس کی جگہ لیں (وہی دوا، وہی طاقت):</p><ul style="margin:4px 0 0; padding-inline-start:20px; list-style:none;">`
         + m.alternatives.map((a, k)=> `<li style="margin-bottom:4px;">${k === 0 ? '1️⃣' : k === 1 ? '2️⃣' : '3️⃣'} <b>${en(a.brand + (a.company ? ' — ' + a.company : ''))}</b>${rxCountry(a.company, a.country) ? '<br><span style="font-size:.85rem; color:var(--muted);">🌍 ملک: ' + esc(rxCountry(a.company, a.country)) + '</span>' : ''}</li>`).join('') + `</ul>`;
@@ -743,6 +758,7 @@ function rxRender(d){
     }
     html += `</div>`;
   });
+  meds.forEach((m, i)=>{ const u = (m.uses || []).slice(0, 2).join('، '); if(u && finalList[i]) finalList[i] += '\n   فائدہ: ' + u; });
   window.rxFinalText = 'نئی دوا لسٹ (My Herbal PK)\n' + finalList.join('\n');
   html += `<div class="result-card" style="margin-top:12px;"><h3>میڈیکل اسٹور کے لیے نئی لسٹ</h3><pre style="white-space:pre-wrap; direction:ltr; text-align:left; font-family:Poppins,sans-serif; font-size:.85rem; line-height:1.8;">${esc(window.rxFinalText)}</pre>`
     + `<div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;"><button class="btn" onclick="rxShare()">📤 واٹس ایپ / شیئر</button><button class="btn secondary" onclick="rxCopy(this)">📋 کاپی</button></div></div>`;
