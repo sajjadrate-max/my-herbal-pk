@@ -705,6 +705,15 @@ async function rxAnalyze(){
   }
   btn.disabled = false;
 }
+// کمپنی کس ملک کی ہے: سائٹ کی اپنی فہرست پہلے، ورنہ AI کا بتایا ہوا
+function rxCountry(company, given){
+  const c = String(company || '').trim();
+  if(c && typeof QM_COMPANY_COUNTRY === 'object'){
+    const k = Object.keys(QM_COMPANY_COUNTRY).find(x=> x.toLowerCase() === c.toLowerCase() || c.toLowerCase().startsWith(x.toLowerCase() + ' '));
+    if(k) return QM_COMPANY_COUNTRY[k];
+  }
+  return String(given || '').trim();
+}
 function rxRender(d){
   const out = document.getElementById('rxResult');
   const meds = d.medicines || [];
@@ -719,14 +728,15 @@ function rxRender(d){
     const base = [m.generic, m.strength].filter(Boolean).join(' ');
     html += `<div class="result-card" style="margin-top:12px; border-right:4px solid ${b[2]};">`
       + `<p style="font-weight:700;">${i+1}۔ ${en(m.written || m.generic)} ${m.company ? '<span style="color:var(--muted); font-size:.85rem;">(' + en(m.company) + ')</span>' : ''}</p>`
+      + (m.company ? `<p style="font-size:.88rem;">🏭 کمپنی: ${en(m.company)} — 🌍 ملک: <b>${esc(rxCountry(m.company, m.country) || 'معلوم نہیں')}</b></p>` : '')
       + `<p style="color:${b[2]}; font-weight:700;">${b[0]} ${b[1]}</p>`
       + (m.reason ? `<p style="color:var(--muted); font-size:.85rem;">${esc(m.reason)}</p>` : '')
       + (base ? `<p>اصل دوا: <b>${en(base + (m.form ? ' · ' + m.form : ''))}</b></p>` : '<p style="color:#e0524f; font-size:.85rem;">اصل دوا (generic) کا نام پڑھا نہیں جا سکا — فارماسسٹ سے پوچھیں۔</p>')
       + (m.dose ? `<p style="font-size:.88rem;">ڈاکٹر کی ہدایت: ${en(m.dose)}</p>` : '');
     if(m.alternatives && m.alternatives.length){
       html += `<p style="margin-top:8px; color:var(--gold-soft); font-weight:700;">اس کی جگہ لیں (وہی دوا، وہی طاقت):</p><ul style="margin:4px 0 0; padding-inline-start:20px; list-style:none;">`
-        + m.alternatives.map((a, k)=> `<li>${k === 0 ? '1️⃣' : k === 1 ? '2️⃣' : '3️⃣'} <b>${en(a.brand + (a.company ? ' — ' + a.company : ''))}</b></li>`).join('') + `</ul>`;
-      finalList.push(`${i+1}. ${m.alternatives[0].brand}${m.alternatives[0].company ? ' (' + m.alternatives[0].company + ')' : ''} — ${base}${m.dose ? ' — ' + m.dose : ''}  [بجائے ${m.written}]`);
+        + m.alternatives.map((a, k)=> `<li style="margin-bottom:4px;">${k === 0 ? '1️⃣' : k === 1 ? '2️⃣' : '3️⃣'} <b>${en(a.brand + (a.company ? ' — ' + a.company : ''))}</b>${rxCountry(a.company, a.country) ? '<br><span style="font-size:.85rem; color:var(--muted);">🌍 ملک: ' + esc(rxCountry(a.company, a.country)) + '</span>' : ''}</li>`).join('') + `</ul>`;
+      finalList.push(`${i+1}. ${m.alternatives[0].brand}${m.alternatives[0].company ? ' (' + m.alternatives[0].company + (rxCountry(m.alternatives[0].company, m.alternatives[0].country) ? ', ' + rxCountry(m.alternatives[0].company, m.alternatives[0].country) : '') + ')' : ''} — ${base}${m.dose ? ' — ' + m.dose : ''}  [بجائے ${m.written}]`);
     } else {
       if(m.status === 'local' || m.status === 'unknown') html += `<p style="font-size:.85rem; color:var(--muted);">اچھی کمپنی کا یہی برانڈ یقین سے نہیں بتایا جا سکا — فارماسسٹ سے اسی generic کا کسی بڑی کمپنی کا برانڈ مانگیں۔</p>`;
       finalList.push(m.status === 'unclear' && !base ? `${i+1}. (صاف نہیں پڑھی گئی — ڈاکٹر/فارماسسٹ سے پوچھیں)` : `${i+1}. ${m.written || m.generic}${base ? ' — ' + base : ''}${m.dose ? ' — ' + m.dose : ''}`);
