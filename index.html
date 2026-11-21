@@ -30,6 +30,7 @@
 <meta name="twitter:title" content="My Herbal PK — Qanoon-e-Mufrad Aza Herbal Medicine Guide">
 <meta name="twitter:description" content="قانونِ مفرد اعضاء کے مطابق مزاج کی تشخیص، نسخہ سازی، غذائی چارٹ اور وٹامنز/معدنیات کی کمی کی تشخیص — حکیم صابر رحمۃ اللہ علیہ کے نظام پر مبنی اردو ویب ایپ۔">
 <meta name="twitter:image" content="https://myherbalpk.com/icon-512.png">
+<script src="offline.js"></script>
 <script src="ptr.js"></script>
 <script src="lang.js"></script>
 <script type="application/ld+json">[{"@context": "https://schema.org", "@type": "WebSite", "name": "My Herbal PK", "alternateName": "مائی ہربل پی کے", "url": "https://myherbalpk.com/", "inLanguage": "ur", "description": "قانونِ مفرد اعضاء کے مطابق مزاج کی تشخیص، نسخہ سازی، غذائی چارٹ اور وٹامنز/معدنیات کی کمی کی تشخیص — حکیم صابر رحمۃ اللہ علیہ کے نظام پر مبنی اردو ویب ایپ۔", "publisher": {"@type": "Organization", "name": "My Herbal PK", "url": "https://myherbalpk.com/", "logo": "https://myherbalpk.com/icon-512.png"}}, {"@context": "https://schema.org", "@type": "WebApplication", "name": "My Herbal PK — قانون مفرد اعضاء", "url": "https://myherbalpk.com/", "applicationCategory": "HealthApplication", "operatingSystem": "Web, Android", "inLanguage": "ur", "isAccessibleForFree": true, "offers": {"@type": "Offer", "price": "0", "priceCurrency": "PKR"}, "description": "قانونِ مفرد اعضاء کے مطابق مزاج کی تشخیص، نسخہ سازی، غذائی چارٹ اور وٹامنز/معدنیات کی کمی کی تشخیص — حکیم صابر رحمۃ اللہ علیہ کے نظام پر مبنی اردو ویب ایپ۔"}]</script>
@@ -931,7 +932,7 @@ function rxCopy(btn){
 })();
 
 // ---------- PAGE NAVIGATION ----------
-function showPage(id){
+function showPage(id, fromHistory){
   // بھاری فہرستیں صرف اپنا صفحہ کھلنے پر بنائیں
   if(id === 'kami'){ const el = document.getElementById('deficiencySymptomList'); if(el && el.dataset.pending){ delete el.dataset.pending; herbalBuildKamiCatalog(el); } }
   if(id === 'wajah' && typeof wajahBuildCatalog === 'function') wajahBuildCatalog();
@@ -948,8 +949,17 @@ function showPage(id){
   window.scrollTo(0,0);
   // کھلا صفحہ یاد رکھیں (لنک میں #… لکھے بغیر) — Refresh پر اسی صفحے پر رہیں
   try{ sessionStorage.setItem('herbalPage', id); }catch(e){}
-  try{ if(location.hash) history.replaceState(null, '', location.pathname + location.search); }catch(e){}
+  // فون کے واپس (←) بٹن کے لیے: ہر حصہ تاریخ (history) میں — واپس دبانے پر پچھلا حصہ کھلے، ایپ بند نہ ہو
+  try{
+    const cur = history.state && history.state.herbalPage;
+    if(fromHistory || cur === id) history.replaceState({ herbalPage: id }, '', location.pathname + location.search);
+    else history.pushState({ herbalPage: id }, '', location.pathname + location.search);
+  }catch(e){}
 }
+window.addEventListener('popstate', e=>{
+  const id = (e.state && e.state.herbalPage) || 'home';
+  if(document.getElementById('page-' + id)) showPage(id, true);
+});
 // Refresh / دوبارہ کھولنے پر وہی صفحہ کھولیں جو پہلے کھلا تھا
 document.addEventListener('DOMContentLoaded', ()=>{
   let id = (location.hash || '').slice(1);
@@ -958,6 +968,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(id === 'home'){ try{ sessionStorage.removeItem('herbalPage'); history.replaceState(null, '', location.pathname + location.search); }catch(e){} window.scrollTo(0, 0); }
   if(id && id !== 'home' && id !== 'pdfmulti' && id !== 'naskhesaz' && /^[a-z]+$/.test(id) && document.getElementById('page-' + id)){
     if(id === 'kami' && typeof qmDeficiencyInit === 'function') qmDeficiencyInit();
+    // ریفریش پر وہی حصہ، مگر واپس دبانے پر ہوم آئے
+    try{ history.replaceState({ herbalPage: 'home' }, '', location.pathname + location.search); }catch(e){}
     showPage(id);
   }
 });
