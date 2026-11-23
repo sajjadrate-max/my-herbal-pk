@@ -127,9 +127,25 @@
     if(host.indexOf('.') > 0) document.cookie = v + '; path=/; domain=' + base + exp;
   }
 
-  var cur = getLang();
-  // ڈیفالٹ زبان کے لیے بھی Google Translate کی کوکی لگائیں تاکہ ترجمہ چلے
-  if(cur !== 'ur' && !/(?:^|;\s*)googtrans=/.test(document.cookie)) setCookie('/ur/' + (GT[cur] || cur));
+  // ہر زبان کے الگ صفحات (/en/... /ar/...) — tools/translate.mjs سے بنتے ہیں، فہرست i18n-langs.js میں
+  var STATIC = window.HERBAL_STATIC_LANGS || [];
+  var SALIAS = { 'ar-ae':'ar', 'ar-sa':'ar', 'ar-bh':'ar', 'ar-qa':'ar', 'ar-kw':'ar' };
+  var staticOf = function(c){ var b = SALIAS[c] || c; return STATIC.indexOf(b) >= 0 ? b : ''; };
+  var pageLang = document.documentElement.getAttribute('data-static-lang') || '';
+  // اصل (اردو) راستہ: /en/articles/x.html → articles/x.html ؛ /en/ (تعارفی صفحہ) → '' یعنی ہوم ایپ
+  var origPath = location.pathname.replace(/^\//, '');
+  if(pageLang) origPath = origPath.replace(new RegExp('^' + pageLang + '/?'), '');
+  var isApp = !pageLang && (origPath === '' || origPath === 'index.html');
+  var hasChoice = false; try{ hasChoice = !!localStorage.getItem(KEY); }catch(e){}
+
+  var cur = pageLang || getLang();
+  // اردو صفحے پر، جس نے خود کوئی زبان چنی ہو اور اس کا الگ صفحہ موجود ہو تو وہاں بھیجیں
+  if(!pageLang && !isApp && hasChoice && cur !== 'ur' && staticOf(cur)){
+    location.replace('/' + staticOf(cur) + '/' + origPath + location.search + location.hash);
+    return;
+  }
+  // ڈیفالٹ زبان کے لیے بھی Google Translate کی کوکی لگائیں تاکہ ترجمہ چلے (الگ زبان والے صفحے پر نہیں)
+  if(!pageLang && cur !== 'ur' && !/(?:^|;\s*)googtrans=/.test(document.cookie)) setCookie('/ur/' + (GT[cur] || cur));
 
   var css = document.createElement('style');
   css.textContent =
@@ -153,7 +169,7 @@
     'html.hl-ltr body{font-family:Poppins,Roboto,"Noto Sans",Arial,sans-serif!important;line-height:1.7;}';
   document.head.appendChild(css);
 
-  if(cur !== 'ur'){
+  if(cur !== 'ur' && !pageLang){
     document.documentElement.lang = cur;
     document.documentElement.dir = RTL.indexOf(cur) >= 0 ? 'rtl' : 'ltr';
     if(RTL.indexOf(cur) < 0) document.documentElement.classList.add('hl-ltr');
@@ -170,6 +186,14 @@
   function choose(code){
     try{ localStorage.setItem(KEY, code); }catch(e){}
     if(code === 'ur') setCookie(''); else setCookie('/ur/' + (GT[code] || code));
+    // جہاں اس زبان کا الگ صفحہ ہو وہاں جائیں، ورنہ اصل صفحہ (Google ترجمہ کے ساتھ)
+    var st = staticOf(code);
+    if(!isApp && (pageLang || st)){
+      if(code !== 'ur' && st) setCookie('');
+      location.href = '/' + (code !== 'ur' && st ? st + '/' : '') + origPath;
+      return;
+    }
+    if(pageLang){ location.href = '/'; return; }
     location.reload();
   }
 
