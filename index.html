@@ -220,6 +220,9 @@ footer{position:fixed; left:0; right:0; bottom:0; z-index:55; text-align:center;
 .rx-pick{display:flex; align-items:flex-start; gap:10px; padding:8px 10px; margin-top:6px; border:1px solid var(--border); border-radius:10px; cursor:pointer;}
 .rx-pick input{margin-top:6px; width:18px; height:18px; accent-color:var(--gold); flex:none;}
 .rx-pick:has(input:checked){border-color:var(--gold); background:rgba(31,122,77,.06);}
+.hero-badges{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0 4px;}
+.hero-badges span{background:#fff; border:1px solid var(--border); color:var(--gold); font:600 .72rem/1.6 Poppins,sans-serif; padding:5px 12px; border-radius:14px;}
+.hero-badges .share-btn{background:linear-gradient(145deg,var(--gold-soft),var(--gold)); border:none; color:#fff; font:800 .78rem/1.6 'Noto Nastaliq Urdu',Poppins,sans-serif; padding:6px 14px; border-radius:14px; cursor:pointer; box-shadow:0 2px 8px rgba(31,122,77,.35);}
 footer a{color:#eef7ea; text-decoration:none; white-space:nowrap; font-family:'Poppins',sans-serif;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -245,6 +248,10 @@ footer a{color:#eef7ea; text-decoration:none; white-space:nowrap; font-family:'P
     <h1>My Herbal PK</h1>
     <p style="color:var(--gold-soft); font-size:1.3rem; margin-bottom:14px;">قانون مفرد اعضاء</p>
     <p>حکیم صابر رحمۃ اللہ علیہ کے قانون کے مطابق مزاج، غذا اور علاج کا مکمل نظام</p>
+    <div class="hero-badges" dir="ltr">
+      <span>✓ 100% Free</span><span>✓ No Sign-Up</span><span>✓ Privacy-First</span><span>✓ 99 Languages</span>
+      <button type="button" class="share-btn" onclick="herbalShare()" aria-label="Share this website">🔗 شئیر کریں</button>
+    </div>
   </div>
   <div id="apkBox" style="background:var(--card); border:1px solid var(--gold); border-radius:10px; padding:14px 16px; margin:0 0 16px; text-align:center;">
     <h4 style="color:var(--gold-soft); margin-bottom:6px; font-size:1rem;">📱 My Herbal PK کی Android ایپ</h4>
@@ -835,6 +842,19 @@ function rxShare(){
 function rxCopy(btn){
   const t = window.rxFinalText || '';
   (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(()=>{ btn.textContent = '✅ کاپی ہو گئی'; }).catch(()=>{ window.prompt('کاپی کریں:', t); });
+}
+</script>
+<script>
+// 🔗 ویب سائٹ شیئر: فون پر شیئر شیٹ (واٹس ایپ وغیرہ)، ورنہ لنک کاپی
+function herbalShare(){
+  const url = 'https://myherbalpk.com/';
+  const text = 'My Herbal PK — قانونِ مفرد اعضاء کے مطابق مزاج کی تشخیص، غذائی چارٹ، نسخہ جات، وٹامن کی کمی اور انگریزی ادویات کی تبدیلی، سب مفت اور اردو میں:';
+  if(navigator.share){ navigator.share({ title: document.title, text, url }).catch(()=>{}); return; }
+  // ایپ (WebView) میں شیئر شیٹ نہیں کھلتی — سیدھا واٹس ایپ
+  if(/; wv\)/.test(navigator.userAgent)){ location.href = 'https://wa.me/?text=' + encodeURIComponent(text + ' ' + url); return; }
+  const done = ()=> alert('لنک کاپی ہو گیا ✅ — اب واٹس ایپ یا کہیں بھی پیسٹ کریں');
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text + ' ' + url).then(done).catch(()=> window.prompt('یہ لنک کاپی کریں:', url));
+  else window.prompt('یہ لنک کاپی کریں:', url);
 }
 </script>
 <footer><a href="#" onclick="location.reload(); return false;">🔄 Refresh</a> · <a href="articles/">📚 Articles</a> · <a href="about.html">ℹ️ About</a> · <a href="contact.html">📞 Contact</a> · <a href="privacy-policy.html">🔒 Privacy Policy</a> · <a href="terms.html">📄 Terms</a> · <a href="disclaimer.html">⚠️ Disclaimer</a></footer>
